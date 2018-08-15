@@ -37,6 +37,8 @@ def load_csv(CSV_FILENAME, batch_size):
                     yield file_dict
                     file_dict = {}
             line_count += 1
+            # if not line_count%20:
+            #     print('Line Count: ' + str(line_count))
     yield file_dict
 
 
