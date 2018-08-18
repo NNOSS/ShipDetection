@@ -21,14 +21,15 @@ MAX_OUTPUTS = 16
 ITERATIONS = 1000000
 LEARNING_RATE = 3e-3
 
-CONVOLUTIONS = TBD
-DECONVOLUTIONS = TBD
+EST_ITERATIONS = 104000 // 64
+CONVOLUTIONS = [32, -32, 64, -64]
+DECONVOLUTIONS = [-64, 64, -32, 32]
 DIVIDEND = 12
 BASE_INPUT_SHAPE = 768, 768, 3
 BASE_OUTPUT_SHAPE = 768, 768, 1
 INPUT_SHAPE = BASE_INPUT_SHAPE[0]/DIVIDEND, BASE_INPUT_SHAPE[1]/DIVIDEND, 3
 OUTPUT_SHAPE = BASE_OUTPUT_SHAPE[0]/DIVIDEND, BASE_OUTPUT_SHAPE[1]/DIVIDEND, 1
-BATCH_SIZE = 32
+BATCH_SIZE = 64
 
 def decode_image(image):
     # Normalize from [0, 255] to [0.0, 1.0]
@@ -74,31 +75,30 @@ def build_model(x, labels):
 
     deconv_pointers = [conv_pointers[-1]]
     for i,v in enumerate(DECONVOLUTIONS):
-        if v < 0:
-            v *= -1
-            concat_layer = tf.concat([BatchNormLayer(conv_pointers_concat.pop(),
+        if v > 0:
+            prev_layer = BatchNormLayer(conv_pointers_concat.pop(),
                 act=tf.nn.relu,is_train=True ,name=
-                'deconv_batch_t_norm%s'%(i)),
-                BatchNormLayer(deconv_pointers[-1],
-                    act=tf.nn.relu,is_train=True ,name=
-                    'deconv_batch_norm%s'%(i))
-                ],
-                axis=3)
-            deconv_pointers.append(DeConv2d(concat_layer,
-                v, filter_size=(5, 5),strides = (2,2), name=
-                'deconv_%s'%(i))))
+                'deconv_batch_t_norm%s'%(i))
+            curr_layer = BatchNormLayer(deconv_pointers[-1],
+                act=tf.nn.relu,is_train=True ,name=
+                'deconv_batch_norm%s'%(i))
+            concat_layer = InputLayer(tf.concat([prev_layer.outputs, curr_layer.outputs],3))
+            deconv_pointers.append(Conv2d(concat_layer,
+                v, filter_size=(5, 5),strides = (1,1), name=
+                'deconv_%s'%(i)))
         else:
+            v *= -1
             concat_layer = BatchNormLayer(deconv_pointers[-1],
                 act=tf.nn.relu,is_train=True ,name=
                 'deconv_batch_norm%s'%(i))
-            deconv_pointers.append(Conv2d(concat_layer,
-                v, filter_size=(5, 5),strides = (1,1), name=
-                'deconv_%s'%(i))))
+            deconv_pointers.append(DeConv2d(concat_layer,
+                v, filter_size=(5, 5),strides = (2,2), name=
+                'deconv_%s'%(i)))
 
 
     final_layer = Conv2d(deconv_pointers[-1],
         1, filter_size=(5, 5),strides = (1,1), name=
-        'deconv_%s'%(i)))
+        'deconv_%s'%(i))
     logits = FlattenLayer(final_layer).outputs
     flat_labels = tf.contrib.layers.flatten(labels)
     cross_entropy = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=flat_labels, logits=logits))
@@ -116,9 +116,13 @@ def build_model(x, labels):
     FN = tf.count_nonzero((final_guess - 1) * flat_labels, dtype=tf.float32)
     true_positive = tf.divide(TP, TP + FP)
     true_negative = tf.divide(TN, TN + FN)
+
     true_positive_summary =tf.summary.scalar('True Positive',true_positive)
     true_negative_summary =tf.summary.scalar('True Negative',true_negative)
-    image_summary = tf.summary.image("Example", tf.concat([tf.sigmoid(final_layer.outputs), tf.expand_dims(labels, axis = -1)], axis = 2),max_outputs = MAX_OUTPUTS)#show fake image
+    tiled_labels = tf.tile(tf.expand_dims(labels, axis = -1), [1,1,1,3])
+    tiled_outputs = tf.tile(tf.sigmoid(final_layer.outputs), [1,1,1,3])
+
+    image_summary = tf.summary.image("Example", tf.concat([x, tiled_outputs, tiled_labels], axis = 2),max_outputs = MAX_OUTPUTS)#show fake image
     # image_summary_2 = tf.summary.image("Example_2", x,max_outputs = MAX_OUTPUTS)#show fake image
     # image_summary_merge = tf.summary.merge([image_summary,image_summary_2])
 
@@ -127,6 +131,8 @@ def build_model(x, labels):
         percent_found_summary_round,percent_found_summary, true_negative_summary,
         true_positive_summary])
     return real_summary , image_summary,train_step
+
+
 
 if __name__ == "__main__":
 
@@ -166,5 +172,8 @@ if __name__ == "__main__":
 
         if not i % WHEN_SAVE:
             saver_perm.save(sess, PERM_MODEL_FILEPATH)
+
+        if not i % EST_ITERATIONS:
+            print('Epoch' + str(i / EST_ITERATIONS))
 
     # train_model(head_block , ITERATIONS, test_bool)

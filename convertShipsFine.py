@@ -9,12 +9,18 @@ CSV_FILENAME = FILEPATH + 'train_ship_segmentations.csv'
 DATA_FILEPATH = FILEPATH + 'train/'
 TRAIN_LABEL_SAVE = FILEPATH + 'train_labels_fine'
 TRAIN_INPUT_SAVE = FILEPATH + 'train_images_fine'
+TEST_LABEL_SAVE = FILEPATH + 'test_labels_fine'
+TEST_INPUT_SAVE = FILEPATH + 'test_images_fine'
 DIVIDEND = 12
 WIDTH = 768
 HEIGHT = 768
 NEW_HEIGHT = HEIGHT / DIVIDEND
 NEW_WIDTH = WIDTH / DIVIDEND
 batch_size= 2000
+total_images = 104000
+percent_hold = .2
+number_hold = total_images * percent_keep
+print('Number Validate' + str(number_hold))
 
 def append_binary_file(file_name, bytes_):
     with open(file_name,"ab") as f:
@@ -52,11 +58,19 @@ while file_dict:
         except:
             continue
     if len(input_group):
-        print(len(input_group))
-        input_group = np.array(input_group, dtype=np.uint8)
-        fine_label = np.array(fine_label, dtype=np.uint8)
-        append_binary_file(TRAIN_INPUT_SAVE,input_group.tobytes())
-        append_binary_file(TRAIN_LABEL_SAVE,fine_label.tobytes())
+        if count < number_hold:
+            print('TEST SAVE')
+            input_group = np.array(input_group, dtype=np.uint8)
+            fine_label = np.array(fine_label, dtype=np.uint8)
+            append_binary_file(TEST_INPUT_SAVE,input_group.tobytes())
+            append_binary_file(TEST_LABEL_SAVE,fine_label.tobytes())
+        else:
+            print('TRAIN SAVE')
+            print(len(input_group))
+            input_group = np.array(input_group, dtype=np.uint8)
+            fine_label = np.array(fine_label, dtype=np.uint8)
+            append_binary_file(TRAIN_INPUT_SAVE,input_group.tobytes())
+            append_binary_file(TRAIN_LABEL_SAVE,fine_label.tobytes())
     else:
         print('EMPTY')
 
