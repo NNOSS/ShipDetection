@@ -11,8 +11,9 @@ CSV_FILENAME = FILEPATH + 'train_ship_segmentations.csv'
 DATA_FILEPATH = FILEPATH + 'train/'
 TRAIN_INPUT_SAVE = FILEPATH + 'train_images'
 TRAIN_LABEL_COARSE_SAVE = FILEPATH + 'train_images_coarse'
-PERM_MODEL_FILEPATH = '/Models/Ships/model.ckpt' #filepaths to model and summaries
-SUMMARY_FILEPATH ='/Models/Ships/Summaries/'
+PERM_MODEL_FILEPATH = '/Models/CoarseShipsTrained/model.ckpt' #filepaths to model and summaries
+PERM_MODEL_FILEPATH2 = '/Models/CoarseShipsTrainedRENAMED/mc_odel.ckpt' #filepaths to model and summaries
+SUMMARY_FILEPATH ='/Models/CoarseShipsTrained/Summaries/'
 
 RESTORE = True
 WHEN_DISP = 10
@@ -60,13 +61,13 @@ def return_datatset_train():
     return tf.data.Dataset.zip((images, labels))
 
 def build_model(x, labels):
-    conv_pointers = [InputLayer(x, name= 'disc_inputs')]
+    conv_pointers = [InputLayer(x, name= 'c_disc_inputs')]
     for i,v in enumerate(CONVOLUTIONS):
         curr_layer = BatchNormLayer(Conv2d(conv_pointers[-1],
             CONVOLUTIONS[i], (5, 5),strides = (2,2), name=
-            'conv1_%s'%(i)),
+            'c_conv1_%s'%(i)),
             act=tf.nn.leaky_relu,is_train=True ,name=
-            'batch_norm%s'%(i))
+            'c_batch_norm%s'%(i))
 
         if i < len(CONVOLUTIONS)-1:
             # conv_pointers.append(ConcatLayer([curr_layer, conv_pointers[-1]],
@@ -76,10 +77,10 @@ def build_model(x, labels):
             conv_pointers.append(curr_layer)
     # y_conv = DenseLayer(flat, m.fully_connected_size, act=tf.nn.relu,name =  'hidden_encode')
     pre_max_pool = Conv2d(conv_pointers[-1],
-        1, (5, 5),strides = (1,1), name='Final_Conv')
+        1, (5, 5),strides = (1,1), name='c_Final_Conv')
     _, pm_width, pm_height, _ = pre_max_pool.outputs.get_shape()
     max_pool_width, max_pool_height = pm_width/DIVIDEND, pm_height/DIVIDEND
-    max_pool = MaxPool2d(pre_max_pool, filter_size = (max_pool_width, max_pool_height), strides = (max_pool_width, max_pool_height), name = 'Final_Pool')
+    max_pool = MaxPool2d(pre_max_pool, filter_size = (max_pool_width, max_pool_height), strides = (max_pool_width, max_pool_height), name = 'c_Final_Pool')
     logits = FlattenLayer(max_pool).outputs
     flat_labels = tf.contrib.layers.flatten(labels)
     cross_entropy = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=flat_labels, logits=logits))
@@ -146,6 +147,7 @@ if __name__ == "__main__":
         print('SAVE')
         saver_perm.save(sess, PERM_MODEL_FILEPATH)
 
+
     train_writer = tf.summary.FileWriter(SUMMARY_FILEPATH,
                                   sess.graph)
     for i in range(ITERATIONS):
@@ -160,4 +162,4 @@ if __name__ == "__main__":
         if not i % WHEN_SAVE:
             saver_perm.save(sess, PERM_MODEL_FILEPATH)
 
-    # train_model(head_block , ITERATIONS, test_bool)
+    train_model(head_block , ITERATIONS, test_bool)

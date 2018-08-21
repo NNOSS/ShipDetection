@@ -12,10 +12,11 @@ TRAIN_LABEL_SAVE = FILEPATH + 'train_labels_fine'
 TRAIN_INPUT_SAVE = FILEPATH + 'train_images_fine'
 TEST_LABEL_SAVE = FILEPATH + 'test_labels_fine'
 TEST_INPUT_SAVE = FILEPATH + 'test_images_fine'
-PERM_MODEL_FILEPATH = '/Models/FineShips/model.ckpt' #filepaths to model and summaries
-SUMMARY_FILEPATH ='/Models/FineShips/Summaries/'
+PERM_MODEL_FILEPATH = '/Models/FineShipsValidated/model.ckpt' #filepaths to model and summaries
+PERM_MODEL_FILEPATH2 = '/Models/FineShipsValidatedRENAMED/model.ckpt' #filepaths to model and summaries
+SUMMARY_FILEPATH ='/Models/FineShipsValidated/Summaries/'
 
-RESTORE = False
+RESTORE = True
 WHEN_DISP = 100
 WHEN_SAVE = 2000
 WHEN_TEST = 50
@@ -68,25 +69,25 @@ def build_model(x, labels, reuse = False):
     else:
         prefix = 'train_'
     with tf.variable_scope(tf.get_variable_scope(), reuse=reuse):
-        conv_pointers = [InputLayer(x, name= 'disc_inputs')]
+        conv_pointers = [InputLayer(x, name= 'f_disc_inputs')]
         conv_pointers_concat = []
         for i,v in enumerate(CONVOLUTIONS):
             if v < 0:
                 v *= -1
                 curr_layer = Conv2d(BatchNormLayer(conv_pointers[-1],
                     act=tf.nn.relu,is_train=True ,name=
-                    'batch_norm%s'%(i)),
+                    'f_batch_norm%s'%(i)),
                     v, (5, 5),strides = (1,1), name=
-                    'conv1_%s'%(i))
+                    'f_conv1_%s'%(i))
                 conv_pointers_concat.append(curr_layer)
-                curr_layer = MaxPool2d(curr_layer, filter_size = (2,2), strides = (2,2), name = 'pool_%s'%(i))
+                curr_layer = MaxPool2d(curr_layer, filter_size = (2,2), strides = (2,2), name = 'f_pool_%s'%(i))
                 conv_pointers.append(curr_layer)
             else:
                 curr_layer = Conv2d(BatchNormLayer(conv_pointers[-1],
                 act=tf.nn.relu,is_train=True ,name=
-                'batch_norm%s'%(i)),
+                'f_batch_norm%s'%(i)),
                     v, (5, 5),strides = (1,1), name=
-                    'conv1_%s'%(i))
+                    'f_conv1_%s'%(i))
                 conv_pointers.append(curr_layer)
 
         deconv_pointers = [conv_pointers[-1]]
@@ -94,27 +95,27 @@ def build_model(x, labels, reuse = False):
             if v > 0:
                 prev_layer = BatchNormLayer(conv_pointers_concat.pop(),
                     act=tf.nn.relu,is_train=True ,name=
-                    'deconv_batch_t_norm%s'%(i))
+                    'f_deconv_batch_t_norm%s'%(i))
                 curr_layer = BatchNormLayer(deconv_pointers[-1],
                     act=tf.nn.relu,is_train=True ,name=
-                    'deconv_batch_norm%s'%(i))
+                    'f_deconv_batch_norm%s'%(i))
                 concat_layer = InputLayer(tf.concat([prev_layer.outputs, curr_layer.outputs],3))
                 deconv_pointers.append(Conv2d(concat_layer,
                     v, filter_size=(5, 5),strides = (1,1), name=
-                    'deconv_%s'%(i)))
+                    'f_deconv_%s'%(i)))
             else:
                 v *= -1
                 concat_layer = BatchNormLayer(deconv_pointers[-1],
                     act=tf.nn.relu,is_train=True ,name=
-                    'deconv_batch_norm%s'%(i))
+                    'f_deconv_batch_norm%s'%(i))
                 deconv_pointers.append(DeConv2d(concat_layer,
                     v, filter_size=(5, 5),strides = (2,2), name=
-                    'deconv_%s'%(i)))
+                    'f_deconv_%s'%(i)))
 
 
         final_layer = Conv2d(deconv_pointers[-1],
             1, filter_size=(5, 5),strides = (1,1), name=
-            'deconv_%s'%(i))
+            'f_deconv_%s'%(i))
         logits = FlattenLayer(final_layer).outputs
         flat_labels = tf.contrib.layers.flatten(labels)
         cross_entropy = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=flat_labels, logits=logits))
@@ -175,13 +176,14 @@ if __name__ == "__main__":
     #Call function to make tf models
     ##########################################################################
     sess.run(tf.global_variables_initializer())
-    #
+
     saver_perm = tf.train.Saver()
     if PERM_MODEL_FILEPATH is not None and RESTORE:
         saver_perm.restore(sess, PERM_MODEL_FILEPATH)
     else:
         print('SAVE')
         saver_perm.save(sess, PERM_MODEL_FILEPATH)
+
 
     train_writer = tf.summary.FileWriter(SUMMARY_FILEPATH,
                                   sess.graph)
@@ -209,4 +211,4 @@ if __name__ == "__main__":
         if not i % EST_ITERATIONS:
             print('Epoch' + str(i / EST_ITERATIONS))
 
-    # train_model(head_block , ITERATIONS, test_bool)
+    train_model(head_block , ITERATIONS, test_bool)
