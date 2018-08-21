@@ -19,7 +19,7 @@ NEW_WIDTH = WIDTH / DIVIDEND
 batch_size= 2000
 total_images = 104000
 percent_hold = .2
-number_hold = total_images * percent_keep
+number_hold = total_images * percent_hold
 print('Number Validate' + str(number_hold))
 
 def append_binary_file(file_name, bytes_):
