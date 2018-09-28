@@ -5,9 +5,9 @@ import tensorlayer as tl
 import numpy as np
 from tensorlayer.layers import *
 
-COARSE_MODEL_FILEPATH2 = '/Models/CoarseShipsTrainedRENAMED/model.ckpt' #filepaths to model and summaries
-FINE_MODEL_FILEPATH2 = '/Models/FineShipsValidatedRENAMED/model.ckpt' #filepaths to model and summaries
-FINAL_FILEPATH = '/Models/FinalShips/model.ckpt'
+COARSE_MODEL_FILEPATH2 = '/Models/CoarseShipsTrained/model.ckpt' #filepaths to model and summaries
+FINE_MODEL_FILEPATH2 = '/Models/FineShipsValidated/model.ckpt' #filepaths to model and summaries
+FINAL_FILEPATH = '/Models/FinalShipsDeep/model.ckpt'
 
 coarse_old_vars = tf.contrib.framework.list_variables(COARSE_MODEL_FILEPATH2)
 fine_old_vars = tf.contrib.framework.list_variables(FINE_MODEL_FILEPATH2)

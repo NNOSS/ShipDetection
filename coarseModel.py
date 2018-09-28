@@ -12,7 +12,6 @@ DATA_FILEPATH = FILEPATH + 'train/'
 TRAIN_INPUT_SAVE = FILEPATH + 'train_images'
 TRAIN_LABEL_COARSE_SAVE = FILEPATH + 'train_images_coarse'
 PERM_MODEL_FILEPATH = '/Models/CoarseShipsTrained/model.ckpt' #filepaths to model and summaries
-PERM_MODEL_FILEPATH2 = '/Models/CoarseShipsTrainedRENAMED/mc_odel.ckpt' #filepaths to model and summaries
 SUMMARY_FILEPATH ='/Models/CoarseShipsTrained/Summaries/'
 
 RESTORE = True
@@ -22,7 +21,7 @@ MAX_OUTPUTS = 16
 ITERATIONS = 1000000
 LEARNING_RATE = 3e-3
 
-CONVOLUTIONS = [32, 64, 128, 256]
+CONVOLUTIONS = [64, 128, 256, 512]
 DIVIDEND = 12
 BASE_INPUT_SHAPE = 768, 768, 3
 BASE_OUTPUT_SHAPE = 768, 768, 1
