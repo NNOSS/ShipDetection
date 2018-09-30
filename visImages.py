@@ -4,8 +4,8 @@ import numpy as np
 import csv
 
 FILEPATH = '/Data/ShipDetection/'
-CSV_FILENAME = FILEPATH + 'train_ship_segmentations.csv'
 DATA_FILEPATH = FILEPATH + 'train/'
+CSV_FILENAME = DATA_FILEPATH +'train_ship_segmentations.csv'
 WIDTH = 768
 HEIGHT = 768
 

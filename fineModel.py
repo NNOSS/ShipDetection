@@ -8,12 +8,12 @@ import numpy as np
 
 FILEPATH = '/Data/ShipDetection/'
 DATA_FILEPATH = FILEPATH + 'train/'
-TRAIN_LABEL_SAVE = FILEPATH + 'train_labels_fine'
-TRAIN_INPUT_SAVE = FILEPATH + 'train_images_fine'
-TEST_LABEL_SAVE = FILEPATH + 'test_labels_fine'
-TEST_INPUT_SAVE = FILEPATH + 'test_images_fine'
-PERM_MODEL_FILEPATH = '/Models/FineShipsValidated/model.ckpt' #filepaths to model and summaries
-SUMMARY_FILEPATH ='/Models/FineShipsValidated/Summaries/'
+TRAIN_LABEL_SAVE = FILEPATH + 'fine/' +'train_labels_fine'
+TRAIN_INPUT_SAVE = FILEPATH + 'fine/' +'train_images_fine'
+TEST_LABEL_SAVE = FILEPATH + 'fine/' +'test_labels_fine'
+TEST_INPUT_SAVE = FILEPATH + 'fine/' +'test_images_fine'
+PERM_MODEL_FILEPATH = '/Models/Ships/FineShipsValidated/model.ckpt' #filepaths to model and summaries
+SUMMARY_FILEPATH ='/Models/Ships/FineShipsValidated/Summaries/'
 
 RESTORE = True
 WHEN_DISP = 100
@@ -26,7 +26,7 @@ LEARNING_RATE = 3e-3
 EST_ITERATIONS = 104000 // 64
 CONVOLUTIONS = [32, -32, 64, -64, 128, -128]
 DECONVOLUTIONS = [-128, 128, -64, 64, -32, 32]
-DIVIDEND = 12
+DIVIDEND = 24
 BASE_INPUT_SHAPE = 768, 768, 3
 BASE_OUTPUT_SHAPE = 768, 768, 1
 INPUT_SHAPE = BASE_INPUT_SHAPE[0]/DIVIDEND, BASE_INPUT_SHAPE[1]/DIVIDEND, 3

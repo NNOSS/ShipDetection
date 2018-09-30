@@ -6,6 +6,7 @@ import tensorlayer as tl
 import numpy as np
 from tensorlayer.layers import *
 from PIL import Image
+import islandProblem
 
 
 FILEPATH = '/Data/ShipDetection/'
@@ -16,7 +17,7 @@ SAVE_PICS = '/home/gtower/Pictures/'
 
 CONVOLUTIONS_FINE =  [32, -32, 64, -64, 128, -128]
 DECONVOLUTIONS_FINE = [-128, 128, -64, 64, -32, 32]
-DIVIDEND = 12
+DIVIDEND = 24
 BASE_INPUT_SHAPE = 768, 768, 3
 BASE_OUTPUT_SHAPE = 768, 768, 1
 INPUT_SHAPE = BASE_INPUT_SHAPE[0]/DIVIDEND, BASE_INPUT_SHAPE[1]/DIVIDEND, 3
@@ -111,7 +112,7 @@ if __name__ == "__main__":
     ##############GET DATA###############
     test_coarse_input = tf.placeholder(tf.float32, shape = (None, BASE_INPUT_SHAPE[0], BASE_INPUT_SHAPE[1], BASE_INPUT_SHAPE[2]))
     coarse_guess = build_coarse_model(test_coarse_input)
-    test_fine_input = tf.placeholder(tf.float32, shape = (None, INPUT_SHAPE[0], INPUT_SHAPE[1], INPUT_SHAPE[2]))
+    test_fine_input = tf.placeholder(tf.float32, shape = (None, None, None, 3))
     fine_guess = build_fine_model(test_fine_input)
 
     sess.run(tf.global_variables_initializer())
@@ -127,34 +128,36 @@ if __name__ == "__main__":
         np_image = np.array(image,dtype=np.float32) / 255.0
         feed_dict = {test_coarse_input: np.expand_dims(np_image,0)}
         coarse_guess_ex = sess.run(coarse_guess,feed_dict=feed_dict)
-        run_fine_model = []
         indices = []
+        box_list = islandProblem.get_boxes(np.squeeze(coarse_guess_ex))
+
         # print(coarse_guess_ex)
         # if np.max(coarse_guess_ex):
         #     im = Image.fromarray(np.squeeze(coarse_guess_ex)* 255)
         #     im = im.resize((BASE_INPUT_SHAPE[0],BASE_INPUT_SHAPE[1]))
         #     im.show()
 
-        for j in range(DIVIDEND*DIVIDEND):
-            # x_a = (j // DIVIDEND) * NEW_WIDTH
-            # y_a = (j % DIVIDEND) * NEW_HEIGHT
-            # label_group[i*DIVIDEND*DIVIDEND + j] = v[x_a:x_a + NEW_WIDTH, y_a:y_a + NEW_HEIGHT]
-            # input_group[i*DIVIDEND*DIVIDEND + j] = np_image[x_a:x_a + NEW_WIDTH, y_a:y_a + NEW_HEIGHT]
-            x_a = (j // DIVIDEND)
-            y_a = (j % DIVIDEND)
-            # print(coarse_guess_ex)
-            has_boat = np.squeeze(coarse_guess_ex)[x_a,y_a]
-            if has_boat:
-                run_fine_model.append(np_image[x_a * INPUT_SHAPE[0]:x_a * INPUT_SHAPE[0] + INPUT_SHAPE[0], y_a * INPUT_SHAPE[1]:y_a * INPUT_SHAPE[1] + INPUT_SHAPE[1]])
-                indices.append(j)
-        if len(run_fine_model):
-            fine_ex = np.array(run_fine_model,dtype=np.float32)
-            fine_guesses = sess.run(fine_guess, feed_dict= {test_fine_input: fine_ex})
+        # for j in range(DIVIDEND*DIVIDEND):
+        #     # x_a = (j // DIVIDEND) * NEW_WIDTH
+        #     # y_a = (j % DIVIDEND) * NEW_HEIGHT
+        #     # label_group[i*DIVIDEND*DIVIDEND + j] = v[x_a:x_a + NEW_WIDTH, y_a:y_a + NEW_HEIGHT]
+        #     # input_group[i*DIVIDEND*DIVIDEND + j] = np_image[x_a:x_a + NEW_WIDTH, y_a:y_a + NEW_HEIGHT]
+        #     x_a = (j // DIVIDEND)
+        #     y_a = (j % DIVIDEND)
+        #     # print(coarse_guess_ex)
+        #     has_boat = np.squeeze(coarse_guess_ex)[x_a,y_a]
+        #     if has_boat:
+        #         run_fine_model.append(np_image[x_a * INPUT_SHAPE[0]:x_a * INPUT_SHAPE[0] + INPUT_SHAPE[0], y_a * INPUT_SHAPE[1]:y_a * INPUT_SHAPE[1] + INPUT_SHAPE[1]])
+        #         indices.append(j)
+        if len(box_list):
             full_guess = np.zeros((BASE_OUTPUT_SHAPE[0],BASE_OUTPUT_SHAPE[1]))
-            for i,j in enumerate(indices):
-                x_a = (j // DIVIDEND)
-                y_a = (j % DIVIDEND)
-                full_guess[x_a * INPUT_SHAPE[0]:x_a * INPUT_SHAPE[0] + INPUT_SHAPE[0], y_a * INPUT_SHAPE[1]:y_a * INPUT_SHAPE[1] + INPUT_SHAPE[1]] = np.squeeze(fine_guesses[i])
+            print(box_list)
+            for mins,maxes in box_list:
+                x_min, y_min = mins[0], mins[1]
+                x_max, y_max = maxes[0]+1, maxes[1]+1
+                fine_ex = np_image[x_min * INPUT_SHAPE[0]:x_max * INPUT_SHAPE[0], y_min * INPUT_SHAPE[1]:y_max * INPUT_SHAPE[1]]
+                fine_guesses = np.squeeze(sess.run(fine_guess, feed_dict= {test_fine_input: np.expand_dims(fine_ex, 0)}))
+                full_guess[x_min * INPUT_SHAPE[0]:x_max * INPUT_SHAPE[0], y_min * INPUT_SHAPE[1]:y_max * INPUT_SHAPE[1]] = fine_guesses
             image.show()
             im = Image.fromarray(full_guess* 255)
             im.show()

@@ -11,18 +11,19 @@ import tensorlayer as tl
 import numpy as np
 from tensorlayer.layers import *
 from PIL import Image
+import islandProblem
 
 
 FILEPATH = '/Data/ShipDetection/'
 DATA_FILEPATH = FILEPATH + 'train/'
-CSV_FILENAME = FILEPATH + 'train_ship_segmentations.csv'
-MODEL_FILEPATH = '/Models/CoarseShipsTrained/model.ckpt' #filepaths to model and summaries
-SUMMARY_FILEPATH ='/Models/CoarseShipsTrained/Summaries/'
-TEST_LABEL_SAVE = FILEPATH + 'test_labels_fine'
-TEST_INPUT_SAVE = FILEPATH + 'test_images_fine'
-TRAIN_LABEL_SAVE = FILEPATH + 'train_labels_fine'
-TRAIN_INPUT_SAVE = FILEPATH + 'train_images_fine'
-DIVIDEND = 12
+CSV_FILENAME = DATA_FILEPATH + 'train_ship_segmentations.csv'
+MODEL_FILEPATH = '/Models/Ships/CoarseShipsTrained/model.ckpt' #filepaths to model and summaries
+SUMMARY_FILEPATH ='/Models/Ships/CoarseShipsTrained/Summaries/'
+TEST_LABEL_SAVE = FILEPATH + 'fine/' + 'test_labels_fine'
+TEST_INPUT_SAVE = FILEPATH + 'fine/' + 'test_images_fine'
+TRAIN_LABEL_SAVE = FILEPATH + 'fine/' + 'train_labels_fine'
+TRAIN_INPUT_SAVE = FILEPATH + 'fine/' + 'train_images_fine'
+DIVIDEND = 24
 WIDTH = 768
 HEIGHT = 768
 NEW_HEIGHT = HEIGHT / DIVIDEND

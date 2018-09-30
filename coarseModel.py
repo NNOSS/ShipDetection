@@ -7,14 +7,14 @@ from tensorlayer.layers import *
 import numpy as np
 
 FILEPATH = '/Data/ShipDetection/'
-CSV_FILENAME = FILEPATH + 'train_ship_segmentations.csv'
 DATA_FILEPATH = FILEPATH + 'train/'
-TRAIN_INPUT_SAVE = FILEPATH + 'train_images'
-TRAIN_LABEL_COARSE_SAVE = FILEPATH + 'train_images_coarse'
-PERM_MODEL_FILEPATH = '/Models/CoarseShipsTrained/model.ckpt' #filepaths to model and summaries
-SUMMARY_FILEPATH ='/Models/CoarseShipsTrained/Summaries/'
+CSV_FILENAME = DATA_FILEPATH + 'train_ship_segmentations.csv'
+TRAIN_INPUT_SAVE = FILEPATH + 'coarse/'+ 'train_images'
+TRAIN_LABEL_COARSE_SAVE = FILEPATH + 'coarse/' + 'train_labels_coarse'
+PERM_MODEL_FILEPATH = '/Models/Ships/CoarseShipsTrained/model.ckpt' #filepaths to model and summaries
+SUMMARY_FILEPATH ='/Models/Ships/CoarseShipsTrained/Summaries/'
 
-RESTORE = True
+RESTORE = False
 WHEN_DISP = 10
 WHEN_SAVE = 2000
 MAX_OUTPUTS = 16
@@ -22,7 +22,7 @@ ITERATIONS = 1000000
 LEARNING_RATE = 3e-3
 
 CONVOLUTIONS = [64, 128, 256, 512]
-DIVIDEND = 12
+DIVIDEND = 24
 BASE_INPUT_SHAPE = 768, 768, 3
 BASE_OUTPUT_SHAPE = 768, 768, 1
 COURSE_SHAPE = DIVIDEND, DIVIDEND
