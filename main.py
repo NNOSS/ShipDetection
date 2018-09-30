@@ -44,11 +44,11 @@ def build_coarse_model(x):
     # y_conv = DenseLayer(flat, m.fully_connected_size, act=tf.nn.relu,name =  'hidden_encode')
     pre_max_pool = Conv2d(conv_pointers[-1],
         1, (5, 5),strides = (1,1), name='c_Final_Conv')
-    # _, pm_width, pm_height, _ = pre_max_pool.outputs.get_shape()
-    # max_pool_width, max_pool_height = pm_width/DIVIDEND, pm_height/DIVIDEND
-    # max_pool = MaxPool2d(pre_max_pool, filter_size = (max_pool_width, max_pool_height), strides = (max_pool_width, max_pool_height), name = 'c_Final_Pool')
-    # logits = FlattenLayer(max_pool).outputs
-    final_guess = tf.round(tf.sigmoid(pre_max_pool.outputs))
+    _, pm_width, pm_height, _ = pre_max_pool.outputs.get_shape()
+    max_pool_width, max_pool_height = pm_width/DIVIDEND, pm_height/DIVIDEND
+    max_pool = MaxPool2d(pre_max_pool, filter_size = (max_pool_width, max_pool_height), strides = (max_pool_width, max_pool_height), name = 'c_Final_Pool')
+    logits = FlattenLayer(max_pool).outputs
+    final_guess = tf.round(tf.sigmoid(max_pool.outputs))
 
     return final_guess
 
@@ -106,7 +106,7 @@ def build_fine_model(x):
 
 
 if __name__ == "__main__":
-    NUM_SKIP = 1000
+    NUM_SKIP = 2000
     sess = tf.Session()#start the session
     ##############GET DATA###############
     test_coarse_input = tf.placeholder(tf.float32, shape = (None, BASE_INPUT_SHAPE[0], BASE_INPUT_SHAPE[1], BASE_INPUT_SHAPE[2]))
@@ -130,36 +130,35 @@ if __name__ == "__main__":
         run_fine_model = []
         indices = []
         # print(coarse_guess_ex)
-        if np.max(coarse_guess_ex):
+        # if np.max(coarse_guess_ex):
+        #     im = Image.fromarray(np.squeeze(coarse_guess_ex)* 255)
+        #     im = im.resize((BASE_INPUT_SHAPE[0],BASE_INPUT_SHAPE[1]))
+        #     im.show()
+
+        for j in range(DIVIDEND*DIVIDEND):
+            # x_a = (j // DIVIDEND) * NEW_WIDTH
+            # y_a = (j % DIVIDEND) * NEW_HEIGHT
+            # label_group[i*DIVIDEND*DIVIDEND + j] = v[x_a:x_a + NEW_WIDTH, y_a:y_a + NEW_HEIGHT]
+            # input_group[i*DIVIDEND*DIVIDEND + j] = np_image[x_a:x_a + NEW_WIDTH, y_a:y_a + NEW_HEIGHT]
+            x_a = (j // DIVIDEND)
+            y_a = (j % DIVIDEND)
+            # print(coarse_guess_ex)
+            has_boat = np.squeeze(coarse_guess_ex)[x_a,y_a]
+            if has_boat:
+                run_fine_model.append(np_image[x_a * INPUT_SHAPE[0]:x_a * INPUT_SHAPE[0] + INPUT_SHAPE[0], y_a * INPUT_SHAPE[1]:y_a * INPUT_SHAPE[1] + INPUT_SHAPE[1]])
+                indices.append(j)
+        if len(run_fine_model):
+            fine_ex = np.array(run_fine_model,dtype=np.float32)
+            fine_guesses = sess.run(fine_guess, feed_dict= {test_fine_input: fine_ex})
+            full_guess = np.zeros((BASE_OUTPUT_SHAPE[0],BASE_OUTPUT_SHAPE[1]))
+            for i,j in enumerate(indices):
+                x_a = (j // DIVIDEND)
+                y_a = (j % DIVIDEND)
+                full_guess[x_a * INPUT_SHAPE[0]:x_a * INPUT_SHAPE[0] + INPUT_SHAPE[0], y_a * INPUT_SHAPE[1]:y_a * INPUT_SHAPE[1] + INPUT_SHAPE[1]] = np.squeeze(fine_guesses[i])
             image.show()
-            im = Image.fromarray(np.squeeze(coarse_guess_ex)* 255)
-            im = im.resize((BASE_INPUT_SHAPE[0],BASE_INPUT_SHAPE[1]))
+            im = Image.fromarray(full_guess* 255)
             im.show()
             raw_input()
-        # for j in range(DIVIDEND*DIVIDEND):
-        #     # x_a = (j // DIVIDEND) * NEW_WIDTH
-        #     # y_a = (j % DIVIDEND) * NEW_HEIGHT
-        #     # label_group[i*DIVIDEND*DIVIDEND + j] = v[x_a:x_a + NEW_WIDTH, y_a:y_a + NEW_HEIGHT]
-        #     # input_group[i*DIVIDEND*DIVIDEND + j] = np_image[x_a:x_a + NEW_WIDTH, y_a:y_a + NEW_HEIGHT]
-        #     x_a = (j // DIVIDEND)
-        #     y_a = (j % DIVIDEND)
-        #     # print(coarse_guess_ex)
-        #     has_boat = np.squeeze(coarse_guess_ex)[x_a,y_a]
-        #     if has_boat:
-        #         run_fine_model.append(np_image[x_a * INPUT_SHAPE[0]:x_a * INPUT_SHAPE[0] + INPUT_SHAPE[0], y_a * INPUT_SHAPE[1]:y_a * INPUT_SHAPE[1] + INPUT_SHAPE[1]])
-        #         indices.append(j)
-        # if len(run_fine_model):
-        #     fine_ex = np.array(run_fine_model,dtype=np.float32)
-        #     fine_guesses = sess.run(fine_guess, feed_dict= {test_fine_input: fine_ex})
-        #     full_guess = np.zeros((BASE_OUTPUT_SHAPE[0],BASE_OUTPUT_SHAPE[1]))
-        #     for i,j in enumerate(indices):
-        #         x_a = (j // DIVIDEND)
-        #         y_a = (j % DIVIDEND)
-        #         full_guess[x_a * INPUT_SHAPE[0]:x_a * INPUT_SHAPE[0] + INPUT_SHAPE[0], y_a * INPUT_SHAPE[1]:y_a * INPUT_SHAPE[1] + INPUT_SHAPE[1]] = np.squeeze(fine_guesses[i])
-        #     image.show()
-        #     im = Image.fromarray(full_guess* 255)
-        #     im.show()
-        #     raw_input()
 
 
 

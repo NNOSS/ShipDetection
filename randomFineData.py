@@ -1,8 +1,14 @@
 from PIL import Image
 import loadCSV
 import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
+import os
+# os.environ["CUDA_VISIBLE_DEVICES"]="-1"
+import glob
+import tensorflow as tf
+import tensorlayer as tl
+from tensorlayer.layers import *
+from PIL import Image
+
 
 FILEPATH = '/Data/ShipDetection/'
 CSV_FILENAME = FILEPATH + 'train_ship_segmentations.csv'
