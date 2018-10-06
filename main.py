@@ -11,8 +11,8 @@ import islandProblem
 
 FILEPATH = '/Data/ShipDetection/'
 DATA_FILEPATH = FILEPATH + 'test/'
-MODEL_FILEPATH = '/Models/FinalShipsDeep/model.ckpt' #filepaths to model and summaries
-SUMMARY_FILEPATH ='/Models/FinalShipsDeep/Summaries/'
+MODEL_FILEPATH = '/Models/Ships/FinalShipsDeep/model.ckpt' #filepaths to model and summaries
+SUMMARY_FILEPATH ='/Models/Ships/FinalShipsDeep/Summaries/'
 SAVE_PICS = '/home/gtower/Pictures/'
 
 CONVOLUTIONS_FINE =  [32, -32, 64, -64, 128, -128]
@@ -24,7 +24,7 @@ INPUT_SHAPE = BASE_INPUT_SHAPE[0]/DIVIDEND, BASE_INPUT_SHAPE[1]/DIVIDEND, 3
 OUTPUT_SHAPE = BASE_OUTPUT_SHAPE[0]/DIVIDEND, BASE_OUTPUT_SHAPE[1]/DIVIDEND, 1
 BATCH_SIZE = 16
 
-CONVOLUTIONS_COARSE = [64, 128, 256, 512]
+CONVOLUTIONS_COARSE = [64, 128, 256, 512,1024]
 COURSE_SHAPE = DIVIDEND, DIVIDEND
 
 def build_coarse_model(x):
@@ -44,7 +44,7 @@ def build_coarse_model(x):
             conv_pointers.append(curr_layer)
     # y_conv = DenseLayer(flat, m.fully_connected_size, act=tf.nn.relu,name =  'hidden_encode')
     pre_max_pool = Conv2d(conv_pointers[-1],
-        1, (5, 5),strides = (1,1), name='c_Final_Conv')
+        1, (1, 1),strides = (1,1), name='c_Final_Conv')
     _, pm_width, pm_height, _ = pre_max_pool.outputs.get_shape()
     max_pool_width, max_pool_height = pm_width/DIVIDEND, pm_height/DIVIDEND
     max_pool = MaxPool2d(pre_max_pool, filter_size = (max_pool_width, max_pool_height), strides = (max_pool_width, max_pool_height), name = 'c_Final_Pool')
@@ -104,10 +104,8 @@ def build_fine_model(x):
         final_guess = tf.round(tf.sigmoid(final_layer.outputs))
         return final_guess
 
-
-
 if __name__ == "__main__":
-    NUM_SKIP = 2000
+    NUM_SKIP = 5000
     sess = tf.Session()#start the session
     ##############GET DATA###############
     test_coarse_input = tf.placeholder(tf.float32, shape = (None, BASE_INPUT_SHAPE[0], BASE_INPUT_SHAPE[1], BASE_INPUT_SHAPE[2]))
@@ -124,6 +122,7 @@ if __name__ == "__main__":
         if NUM_SKIP:
             NUM_SKIP -= 1
             continue
+        print('Go')
         image = Image.open(name)
         np_image = np.array(image,dtype=np.float32) / 255.0
         feed_dict = {test_coarse_input: np.expand_dims(np_image,0)}
@@ -158,8 +157,11 @@ if __name__ == "__main__":
                 fine_ex = np_image[x_min * INPUT_SHAPE[0]:x_max * INPUT_SHAPE[0], y_min * INPUT_SHAPE[1]:y_max * INPUT_SHAPE[1]]
                 fine_guesses = np.squeeze(sess.run(fine_guess, feed_dict= {test_fine_input: np.expand_dims(fine_ex, 0)}))
                 full_guess[x_min * INPUT_SHAPE[0]:x_max * INPUT_SHAPE[0], y_min * INPUT_SHAPE[1]:y_max * INPUT_SHAPE[1]] = fine_guesses
-            image.show()
-            im = Image.fromarray(full_guess* 255)
+            full_guess = np.tile(np.expand_dims(full_guess, -1), [1,1,3])
+            con = np.uint8(np.concatenate([np_image* 255, full_guess* 255], axis = 1))
+            print(con.shape)
+            print(type(con))
+            im = Image.fromarray(con, 'RGB')
             im.show()
             raw_input()
 
