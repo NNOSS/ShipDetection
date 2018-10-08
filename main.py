@@ -24,14 +24,19 @@ INPUT_SHAPE = BASE_INPUT_SHAPE[0]/DIVIDEND, BASE_INPUT_SHAPE[1]/DIVIDEND, 3
 OUTPUT_SHAPE = BASE_OUTPUT_SHAPE[0]/DIVIDEND, BASE_OUTPUT_SHAPE[1]/DIVIDEND, 1
 BATCH_SIZE = 16
 
-CONVOLUTIONS_COARSE = [64, 128, 256, 512,1024]
+CONVOLUTIONS_COARSE = [-64, 128, -128, 256, -256, 512]
 COURSE_SHAPE = DIVIDEND, DIVIDEND
 
 def build_coarse_model(x):
     conv_pointers = [InputLayer(x, name= 'c_disc_inputs')]
     for i,v in enumerate(CONVOLUTIONS_COARSE):
+        if v < 0:
+            strides = (2,2)
+            v *= -1
+        else:
+            strides = (1,1)
         curr_layer = BatchNormLayer(Conv2d(conv_pointers[-1],
-            CONVOLUTIONS_COARSE[i], (5, 5),strides = (2,2), name=
+            v, (5, 5),strides = strides, name=
             'c_conv1_%s'%(i)),
             act=tf.nn.leaky_relu,is_train=True ,name=
             'c_batch_norm%s'%(i))
@@ -105,7 +110,7 @@ def build_fine_model(x):
         return final_guess
 
 if __name__ == "__main__":
-    NUM_SKIP = 5000
+    NUM_SKIP = 500
     sess = tf.Session()#start the session
     ##############GET DATA###############
     test_coarse_input = tf.placeholder(tf.float32, shape = (None, BASE_INPUT_SHAPE[0], BASE_INPUT_SHAPE[1], BASE_INPUT_SHAPE[2]))

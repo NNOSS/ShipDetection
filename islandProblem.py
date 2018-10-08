@@ -35,9 +35,13 @@ def get_boxes(array):
     box_list = []
     # print(ship_list)
     for ship in ship_list:
-        mins = np.min(ship, axis = 0)
+        minvales = np.min(ship, axis = 0)
+        min_x, min_y = minvales[0], minvales[1]
+        mins = max(min_x-1,0),max(min_y-1,0)
         # print(mins)
-        maxes = np.max(ship, axis = 0)
+        maxvales = np.max(ship, axis = 0)
+        max_x, max_y = maxvales[0], maxvales[1]
+        maxes = min(max_x-1,len(array)),min(max_y-1,len(array[0]))
         box_list.append((mins, maxes))
     return box_list
 
